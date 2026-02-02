@@ -2,7 +2,7 @@
 
 > Complete observability solution for Spring Batch with Prometheus and Grafana
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.0-blue.svg)](https://search.maven.org/artifact/io.github.sambouch/spring-batch-observability)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.0-blue.svg)](https://search.maven.org/artifact/io.github.sambouch79/spring-batch-observability)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Batch](https://img.shields.io/badge/Spring%20Batch-5.x-green.svg)](https://spring.io/projects/spring-batch)
