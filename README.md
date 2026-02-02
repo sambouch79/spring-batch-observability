@@ -11,12 +11,22 @@
 
 - ✅ **Zero code configuration ** - – no listener to register manually
 - ✅ **Automatic metrics collection** for all Spring Batch jobs and steps
+<<<<<<< HEAD
 - ✅ **Comprehensive batch metrics** - Items read/written/skipped, errors, retries, throughput
 - ✅ **Performance monitoring** - Job, step, and chunk execution duration with percentiles
 - ✅ **Throughput measurement** - Automatic calculation in items/second
 - ✅ **Prometheus integration** - Works seamlessly with Micrometer and Pushgateway
 - ✅ **Ready-to-use Grafana dashboard** - Professional visualizations included
 
+=======
+- ✅ **Throughput measurement** in items/second
+- ✅ **Detailed error tracking** (skips, rollbacks, failures)
+- ✅ **Push to Prometheus Pushgateway** for short-lived batch jobs
+- ✅ **Ready-to-use Grafana dashboard** with professional visualizations
+- ✅ **Auto-configured once dependencies are present** - just add the annotation
+- ✅ **JVM metrics included** (memory, CPU, GC)
+- ✅ **Designed for production workloads** Built using Spring Batch & Micrometer best practices
+>>>>>>> 5999227cb7c82f47f25dcd41eaa2507c63518a05
 
 ## 📊 Metrics Collected
 
