@@ -11,7 +11,7 @@
 
     <name>Spring Batch Observability</name>
     <description>Complete observability solution for Spring Batch with Prometheus and Grafana</description>
-    <url>https://github.com/ton-pseudo/spring-batch-observability</url>
+    <url>https://github.com/sambouch79/spring-batch-observability</url>
 
     <licenses>
         <license>
@@ -23,16 +23,16 @@
 
     <developers>
         <developer>
-            <id>ton-pseudo</id>
-            <name>Ton Nom</name>
-            <email>ton.email@example.com</email>
+            <id>sambouch79</id>
+            <name>Bouchekir</name>
+            <email>sambouch1979@gmail.com</email>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/ton-pseudo/spring-batch-observability.git</connection>
-        <developerConnection>scm:git:ssh://github.com:ton-pseudo/spring-batch-observability.git</developerConnection>
-        <url>https://github.com/ton-pseudo/spring-batch-observability/tree/main</url>
+        <connection>scm:git:git://github.com/sambouch79/spring-batch-observability.git</connection>
+        <developerConnection>scm:git:ssh://github.com:sambouch79/spring-batch-observability.git</developerConnection>
+        <url>https://github.com/sambouch79/spring-batch-observability/tree/main</url>
     </scm>
 
     <properties>
