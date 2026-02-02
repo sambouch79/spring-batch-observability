@@ -14,9 +14,9 @@
 - ✅ **Detailed error tracking** (skips, rollbacks, failures)
 - ✅ **Push to Prometheus Pushgateway** for short-lived batch jobs
 - ✅ **Ready-to-use Grafana dashboard** with professional visualizations
-- ✅ **Zero configuration required** - just add the annotation
+- ✅ **Auto-configured once dependencies are present** - just add the annotation
 - ✅ **JVM metrics included** (memory, CPU, GC)
-- ✅ **Production-ready** and battle-tested
+- ✅ **Designed for production workloads** Built using Spring Batch & Micrometer best practices
 
 ## 📊 Metrics Collected
 
