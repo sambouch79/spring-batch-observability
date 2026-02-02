@@ -2,7 +2,7 @@
 
 > Complete observability solution for Spring Batch with Prometheus and Grafana
 
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.0-blue.svg)](https://search.maven.org/artifact/io.github.yourusername/spring-batch-observability)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-1.0.0-blue.svg)](https://search.maven.org/artifact/io.github.sambouch/spring-batch-observability)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Batch](https://img.shields.io/badge/Spring%20Batch-5.x-green.svg)](https://spring.io/projects/spring-batch)
@@ -82,7 +82,7 @@ Add the dependency to your `pom.xml`:
 ### Gradle
 
 ```gradle
-implementation 'io.github.yourusername:spring-batch-observability:1.0.0'
+implementation 'io.github.sambouch:spring-batch-observability:1.0.0'
 
 // Required dependencies (if not already present)
 implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -170,6 +170,10 @@ mvn spring-boot:run
 ## 📈 Grafana Dashboard
 
 A production-ready Grafana dashboard is included in the `dashboards/` directory.
+Below are some previews of the monitoring interface:
+
+![Dashboard Screenshot 1](./docs/grafanaDashboard1.png)
+![Dashboard Screenshot 2](./docs/grafanadashboard2.png)
 
 ### Features
 - ⏱️ Job and Step duration gauges
@@ -184,7 +188,7 @@ A production-ready Grafana dashboard is included in the `dashboards/` directory.
 
 1. Open Grafana
 2. Go to **Dashboards** → **Import**
-3. Upload `dashboards/spring-batch-dashboard.json`
+3. Upload `dashboards/spring-batch-dashboard-v1.json`
 4. Select your Prometheus datasource
 5. Click **Import**
 
@@ -264,16 +268,6 @@ Track and analyze errors:
 - Monitor error rates over time
 - Alert on error thresholds
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## 📝 Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for a list of changes.
@@ -290,8 +284,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/spring-batch-observability/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/spring-batch-observability/discussions)
+- **Issues**: [GitHub Issues](https://github.com/sambouch79/spring-batch-observability/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/sambouch79/spring-batch-observability/discussions)
 
 ## ⭐ Show Your Support
 
