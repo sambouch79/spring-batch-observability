@@ -19,11 +19,11 @@ import java.util.Map;
 
 /**
  * Configuration pour le push des métriques vers Prometheus Pushgateway
- * Compatible avec simpleclient_pushgateway 0.9.0
+ * Compatible avec simpleclient_pushgateway 0.16.0
  */
 @Configuration
 @ConditionalOnClass(name = "io.prometheus.client.exporter.PushGateway")
-@ConditionalOnProperty(name = "monitoring.prometheus.pushgateway.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "monitoring.prometheus.pushgateway.enabled", havingValue = "true", matchIfMissing = false)
 public class PrometheusPushGatewayConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(PrometheusPushGatewayConfiguration.class);
@@ -48,14 +48,6 @@ public class PrometheusPushGatewayConfiguration {
                 log.info("Job terminé: {} avec statut: {}",
                         jobExecution.getJobInstance().getJobName(),
                         jobExecution.getStatus());
-                /*try {
-                    pushMetrics(meterRegistry, jobExecution, properties);
-                } catch (Exception e) {
-                    System.err.println(">>> ERREUR PUSH: " + e.getMessage());
-                }finally {
-                    // Fermer proprement le registre (parfois insuffisant)
-                    meterRegistry.close();
-                }*/
             }
         };
     }

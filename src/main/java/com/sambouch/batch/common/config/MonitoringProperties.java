@@ -1,65 +1,59 @@
 package com.sambouch.batch.common.config;
 
-import org.springframework.stereotype.Component;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Configuration properties pour le monitoring
+ * Properties de configuration pour le monitoring des batchs Spring Batch.
+ *
+ * <p>Préfixe : {@code monitoring}</p>
+ *
+ * <p>Exemple de configuration :
+ * <pre>
+ * monitoring:
+ *   application-name: my-batch-app
+ *   prometheus:
+ *     pushgateway:
+ *       enabled: true
+ *       url: http://localhost:9091
+ *       job: spring-batch
+ * </pre>
  */
-@Component
+@Data
 @ConfigurationProperties(prefix = "monitoring")
 public class MonitoringProperties {
+    /**
+     * Active ou désactive le monitoring Spring Batch.
+     * Par défaut : true
+     */
+    private boolean enabled = true;
 
+    /**
+     * Nom de l'application
+     */
     private String applicationName = "batch-application";
-    private MonitoringProperties.Prometheus prometheus = new MonitoringProperties.Prometheus();
 
-    public String getApplicationName() {
-        return applicationName;
-    }
+    /**
+     * Configuration Prometheus
+     */
+    private Prometheus prometheus = new Prometheus();
 
-    public void setApplicationName(String applicationName) {
-        this.applicationName = applicationName;
-    }
-
-    public MonitoringProperties.Prometheus getPrometheus() {
-        return prometheus;
-    }
-
-    public void setPrometheus(MonitoringProperties.Prometheus prometheus) {
-        this.prometheus = prometheus;
-    }
-
+    @Data
     public static class Prometheus {
-        private MonitoringProperties.Prometheus.Pushgateway pushgateway = new MonitoringProperties.Prometheus.Pushgateway();
+        private Pushgateway pushgateway = new Pushgateway();
+    }
 
-        public MonitoringProperties.Prometheus.Pushgateway getPushgateway() {
-            return pushgateway;
-        }
+    @Data
+    public static class Pushgateway {
+        /**
+         * URL du Pushgateway
+         */
+        private String url = "http://localhost:9091";
 
-        public void setPushgateway(MonitoringProperties.Prometheus.Pushgateway pushgateway) {
-            this.pushgateway = pushgateway;
-        }
-
-        public static class Pushgateway {
-            private boolean enabled = true;
-            private String url = "localhost:9091";
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getUrl() {
-                return url;
-            }
-
-            public void setUrl(String url) {
-                this.url = url;
-            }
-        }
+        /**
+         * Nom du job dans Prometheus
+         */
+        private String job = "spring-batch";
     }
 }
 

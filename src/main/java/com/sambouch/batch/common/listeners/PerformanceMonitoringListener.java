@@ -36,6 +36,9 @@ public class PerformanceMonitoringListener
     private final Map<String, Counter> filteredCounters = new ConcurrentHashMap<>();
     private final Map<String, Counter> failuresCounters = new ConcurrentHashMap<>();
     private final Map<String, DistributionSummary> throughputSummaries = new ConcurrentHashMap<>();
+    private final Map<String, Counter> jobExecutionsCounters = new ConcurrentHashMap<>();
+    private final Map<String, Counter> jobItemsWrittenCounters = new ConcurrentHashMap<>();
+    private final Map<String, Timer> jobDurationTimers = new ConcurrentHashMap<>();
 
     public PerformanceMonitoringListener(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
@@ -46,7 +49,6 @@ public class PerformanceMonitoringListener
     @Override
     public void beforeStep(StepExecution stepExecution) {
         this.stepSample = Timer.start(meterRegistry);
-
         log.debug("Step démarré : {}", stepExecution.getStepName());
     }
 
@@ -158,35 +160,46 @@ public class PerformanceMonitoringListener
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        String jobName = jobExecution.getJobInstance().getJobName();
-        String status = jobExecution.getStatus().toString();
+            String jobName = jobExecution.getJobInstance().getJobName();
+            String status = jobExecution.getStatus().toString();
+            String key = jobName + ":" + status;
 
-        // Métrique 1 : Durée du job
-        this.jobSample.stop(Timer.builder("batch.job.duration")
-                .tag("job.name", jobName)
-                .tag("status", status)
-                .description("Duration of batch job execution")
-                .register(meterRegistry));
+            // Durée du job
+            Timer jobTimer = jobDurationTimers.computeIfAbsent(key, k ->
+                    Timer.builder("batch.job.duration")
+                            .tag("job.name", jobName)
+                            .tag("status", status)
+                            .description("Duration of batch job execution")
+                            .publishPercentileHistogram(true)
+                            .register(meterRegistry)
+            );
 
-        // Métrique 2 : Nombre d'exécutions par statut
-        Counter.builder("batch.job.executions")
-                .tag("job.name", jobName)
-                .tag("status", status)
-                .description("Total number of batch job executions")
-                .register(meterRegistry)
-                .increment();
+            this.jobSample.stop(jobTimer);
 
-        long totalWritten = jobExecution.getStepExecutions()
-                .stream()
-                .mapToLong(StepExecution::getWriteCount)
-                .sum();
+            // Nombre d'exécutions (avec cache)
+            jobExecutionsCounters.computeIfAbsent(key, k ->
+                    Counter.builder("batch.job.executions")
+                            .tag("job.name", jobName)
+                            .tag("status", status)
+                            .description("Total number of batch job executions")
+                            .register(meterRegistry)
+            ).increment();
 
-        Counter.builder("batch.job.items.written")
-                .tag("job.name", jobName)
-                .register(meterRegistry)
-                .increment(totalWritten);
+            // Items written (avec cache)
+            long totalWritten = jobExecution.getStepExecutions()
+                    .stream()
+                    .mapToLong(StepExecution::getWriteCount)
+                    .sum();
 
-        log.debug(" Job terminé : {} - Statut : {}", jobName, status);
+            jobItemsWrittenCounters.computeIfAbsent(jobName, k ->
+                    Counter.builder("batch.job.items.written")
+                            .tag("job.name", jobName)
+                            .description("Total items written by job")
+                            .register(meterRegistry)
+            ).increment(totalWritten);
+
+            log.debug("📊 Job terminé : {} - Statut : {}", jobName, status);
+
     }
 
 
