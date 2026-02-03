@@ -4,11 +4,11 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Properties de configuration pour le monitoring des batchs Spring Batch.
+ * Configuration properties for Spring Batch monitoring.
  *
- * <p>Préfixe : {@code monitoring}</p>
+ * <p>Prefix: {@code monitoring}</p>
  *
- * <p>Exemple de configuration :
+ * <p>Configuration example:
  * <pre>
  * monitoring:
  *   application-name: my-batch-app
@@ -23,18 +23,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "monitoring")
 public class MonitoringProperties {
     /**
-     * Active ou désactive le monitoring Spring Batch.
-     * Par défaut : true
+     * Enables or disables Spring Batch monitoring.
+     * Default: true
      */
     private boolean enabled = true;
 
     /**
-     * Nom de l'application
+     * Application name
      */
     private String applicationName = "batch-application";
 
     /**
-     * Configuration Prometheus
+     * Prometheus configuration
      */
     private Prometheus prometheus = new Prometheus();
 
@@ -46,12 +46,12 @@ public class MonitoringProperties {
     @Data
     public static class Pushgateway {
         /**
-         * URL du Pushgateway
+         * Pushgateway  URL
          */
         private String url = "http://localhost:9091";
 
         /**
-         * Nom du job dans Prometheus
+         * Job name in Prometheus
          */
         private String job = "spring-batch";
     }

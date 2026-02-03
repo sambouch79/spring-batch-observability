@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Listener de monitoring automatique pour Spring Batch.
- * Collecte les métriques de :
- * - Job : durée, nombre d'exécutions, statut
- * - Step : durée, items lus/écrits/skippés, erreurs
- * - Chunk : durée, erreurs
+ * Automatic monitoring listener for Spring Batch.
+ * Collects metrics for:
+ * - Job: duration, execution count, status
+ * - Step: duration, items read/written/skipped, errors
+ * - Chunk: duration, errors
  */
 public class PerformanceMonitoringListener
         implements StepExecutionListener, JobExecutionListener, ChunkListener {
@@ -25,7 +25,7 @@ public class PerformanceMonitoringListener
 
     private final MeterRegistry meterRegistry;
 
-    // Timers pour mesurer les durées
+    // Timers
     private Timer.Sample jobSample;
     private Timer.Sample stepSample;
     private Timer.Sample chunkSample;
@@ -49,7 +49,7 @@ public class PerformanceMonitoringListener
     @Override
     public void beforeStep(StepExecution stepExecution) {
         this.stepSample = Timer.start(meterRegistry);
-        log.debug("Step démarré : {}", stepExecution.getStepName());
+        log.debug("Step started : {}", stepExecution.getStepName());
     }
 
 
@@ -60,7 +60,7 @@ public class PerformanceMonitoringListener
         String status = stepExecution.getExitStatus().getExitCode();
         String key = buildKey(jobName, stepName);
 
-        // Logs de debug
+        // Debug logs
         if (log.isDebugEnabled()) {
             log.debug(" Step {} - Read: {}, Write: {}, Skip: {}, Rollback: {}, Filter: {}",
                     stepName,
@@ -71,7 +71,7 @@ public class PerformanceMonitoringListener
                     stepExecution.getFilterCount());
         }
 
-        // Durée
+        // Duration
         long durationNanos = this.stepSample.stop(Timer.builder("batch.step.duration")
                 .tag("job.name", jobName)
                 .tag("step.name", stepName)
@@ -155,7 +155,7 @@ public class PerformanceMonitoringListener
     @Override
     public void beforeJob(JobExecution jobExecution) {
         this.jobSample = Timer.start(meterRegistry);
-        log.debug(" Job démarré : {}", jobExecution.getJobInstance().getJobName());
+        log.debug(" Job started : {}", jobExecution.getJobInstance().getJobName());
     }
 
     @Override
@@ -164,7 +164,7 @@ public class PerformanceMonitoringListener
             String status = jobExecution.getStatus().toString();
             String key = jobName + ":" + status;
 
-            // Durée du job
+            // Job duration
             Timer jobTimer = jobDurationTimers.computeIfAbsent(key, k ->
                     Timer.builder("batch.job.duration")
                             .tag("job.name", jobName)
@@ -176,7 +176,7 @@ public class PerformanceMonitoringListener
 
             this.jobSample.stop(jobTimer);
 
-            // Nombre d'exécutions (avec cache)
+            // Total number of batch job executions
             jobExecutionsCounters.computeIfAbsent(key, k ->
                     Counter.builder("batch.job.executions")
                             .tag("job.name", jobName)
@@ -185,7 +185,7 @@ public class PerformanceMonitoringListener
                             .register(meterRegistry)
             ).increment();
 
-            // Items written (avec cache)
+            // Items written
             long totalWritten = jobExecution.getStepExecutions()
                     .stream()
                     .mapToLong(StepExecution::getWriteCount)
@@ -198,7 +198,7 @@ public class PerformanceMonitoringListener
                             .register(meterRegistry)
             ).increment(totalWritten);
 
-            log.debug("📊 Job terminé : {} - Statut : {}", jobName, status);
+            log.debug("📊 Job completed : {} - Status : {}", jobName, status);
 
     }
 
@@ -219,7 +219,7 @@ public class PerformanceMonitoringListener
             String jobName = stepExecution.getJobExecution().getJobInstance().getJobName();
             String stepName = stepExecution.getStepName();
 
-                // Métrique : Durée du chunk
+                //Chunk duration
                 this.chunkSample.stop(Timer.builder("batch.chunk.duration")
                         .tag("job.name", jobName)
                         .tag("step.name", stepName)
@@ -237,7 +237,7 @@ public class PerformanceMonitoringListener
         StepExecution stepExecution = context.getStepContext().getStepExecution();
         String stepName = stepExecution.getStepName();
 
-        log.error("Erreur dans le chunk du step : {}", stepName);
+        log.error("Error in chunk for step : {}", stepName);
     }
 
     private void recordThroughput(StepExecution stepExecution, long durationMs, String key) {
@@ -247,14 +247,14 @@ public class PerformanceMonitoringListener
         // Validation
         double durationSeconds = durationMs / 1000.0;
         if (durationSeconds < 0.001) {
-            log.warn(" Durée trop courte ({} ms), throughput non calculé", durationMs);
+            log.warn("⚠️ Duration too short ({} ms), throughput not calculated", durationMs);
             return;
         }
 
         // Calcul
         double throughput = stepExecution.getWriteCount() / durationSeconds;
 
-        // Enregistrement
+        // throughput
         throughputSummaries.computeIfAbsent(key, k ->
                 DistributionSummary.builder("batch.step.throughput")
                         .description("Items processed per second")
@@ -262,7 +262,7 @@ public class PerformanceMonitoringListener
                         .register(meterRegistry)
         ).record(throughput);
 
-        log.info("Throughput: {} items/sec (durée: {}ms, items: {})",
+        log.debug("Throughput: {} items/sec (duration: {}ms, items: {})",
                 String.format("%.2f", throughput), durationMs, stepExecution.getWriteCount());
     }
 

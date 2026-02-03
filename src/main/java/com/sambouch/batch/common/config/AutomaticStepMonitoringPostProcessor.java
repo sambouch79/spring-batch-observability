@@ -11,8 +11,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 /**
- * Post-processor qui enregistre automatiquement le PerformanceMonitoringListener
- * sur tous les Jobs et Steps Spring Batch détectés dans le contexte.
+ * Post-processor that automatically registers the PerformanceMonitoringListener
+ * on all Spring Batch Jobs and Steps detected in the context.
  */
 public class AutomaticStepMonitoringPostProcessor implements BeanPostProcessor {
 
@@ -34,16 +34,16 @@ public class AutomaticStepMonitoringPostProcessor implements BeanPostProcessor {
             if (bean instanceof TaskletStep taskletStep) {
                 taskletStep.registerStepExecutionListener(listener);
                 taskletStep.registerChunkListener(listener);
-                log.info(" Monitoring activé pour Step: {}", beanName);
+                log.debug(" Monitoring enabled for Step: {}", beanName);
             } else if (bean instanceof PartitionStep partitionStep) {
                 partitionStep.registerStepExecutionListener(listener);
-                log.info(" Monitoring activé pour PartitionStep: {}", beanName);
+                log.debug(" Monitoring enabled for PartitionStep: {}", beanName);
             } else {
-                log.debug(" Type de Step non supporté: {} (type: {})",
+                log.debug("⚠️ Unsupported Step type: {} (type: {})",
                         beanName, bean.getClass().getSimpleName());
             }
         } catch (Exception e) {
-            log.warn(" Erreur lors de l'enregistrement du listener sur {}: {}",
+            log.warn("❌ Failed to register listener on {}: {}",
                     beanName, e.getMessage());
         }
 

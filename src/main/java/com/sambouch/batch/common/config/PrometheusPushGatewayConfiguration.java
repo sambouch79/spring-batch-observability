@@ -18,8 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Configuration pour le push des métriques vers Prometheus Pushgateway
- * Compatible avec simpleclient_pushgateway 0.16.0
+ * Configuration for pushing metrics to Prometheus Pushgateway.
+ * Compatible with simpleclient_pushgateway 0.16.0
  */
 @Configuration
 @ConditionalOnClass(name = "io.prometheus.client.exporter.PushGateway")
@@ -34,18 +34,18 @@ public class PrometheusPushGatewayConfiguration {
             MeterRegistry meterRegistry,
             MonitoringProperties properties) {
 
-        log.info("✅ Configuration Pushgateway (simpleclient 0.9.0): {}",
+        log.info("✅  Pushgateway Configuration (simpleclient 0.16.0): {}",
                 properties.getPrometheus().getPushgateway().getUrl());
 
         return new JobExecutionListener() {
             @Override
             public void beforeJob(JobExecution jobExecution) {
-                log.debug("Job démarré: {}", jobExecution.getJobInstance().getJobName());
+                log.debug("Job started: {}", jobExecution.getJobInstance().getJobName());
             }
 
             @Override
             public void afterJob(JobExecution jobExecution) {
-                log.info("Job terminé: {} avec statut: {}",
+                log.debug("Job completed: {} with status: {}",
                         jobExecution.getJobInstance().getJobName(),
                         jobExecution.getStatus());
             }
@@ -57,7 +57,7 @@ public class PrometheusPushGatewayConfiguration {
                              MonitoringProperties properties) {
         try {
             if (!(meterRegistry instanceof PrometheusMeterRegistry)) {
-                log.warn("⚠️ MeterRegistry n'est pas de type Prometheus");
+                log.warn("⚠️  MeterRegistry is not of type Prometheus");
                 return;
             }
 
@@ -70,24 +70,24 @@ public class PrometheusPushGatewayConfiguration {
             String url = properties.getPrometheus().getPushgateway().getUrl();
             String applicationName = properties.getApplicationName();
 
-            // Créer le PushGateway
+            // create PushGateway
             PushGateway pushGateway = new PushGateway(url);
 
-            // Grouping key avec labels additionnels
+            // Grouping key by labels additionnels
             Map<String, String> groupingKey = new HashMap<>();
             groupingKey.put("instance", applicationName);
             groupingKey.put("job_execution_id", String.valueOf(jobExecution.getId()));
             groupingKey.put("status", jobExecution.getStatus().toString());
 
-            // Push avec grouping key
+            // Push and grouping key
             pushGateway.push(collectorRegistry, jobName, groupingKey);
 
-            log.info("✅ Métriques poussées vers Pushgateway: {} (job: {})", url, jobName);
+            log.debug("✅ Metrics pushed to Pushgateway: {} (job: {})", url, jobName);
 
         } catch (IOException e) {
-            log.error("❌ Erreur lors du push des métriques vers Pushgateway", e);
+            log.error("❌ Error pushing metrics to Pushgateway", e);
         } catch (Exception e) {
-            log.error("❌ Erreur inattendue lors du push des métriques", e);
+            log.error("❌ Unexpected error pushing metrics", e);
         }
     }
 

@@ -16,12 +16,12 @@ import org.springframework.context.annotation.Configuration;
 
 
 /**
- * Auto-configuration pour le monitoring automatique des batchs Spring Batch.
+ * Auto-configuration for automatic Spring Batch monitoring.
  *
- * <p>Active automatiquement le monitoring des Jobs et Steps avec export vers
+ * <p>Automatically enables monitoring of Jobs and Steps with export to
  * Prometheus Pushgateway.</p>
  *
- * <p>Peut être désactivé via la property :
+ * <p>Can be disabled via the property:
  * {@code monitoring.enabled=false}</p>
  */
 @Configuration
@@ -38,31 +38,31 @@ public class BatchMonitoringAutoConfiguration {
     private static final Logger log = LoggerFactory.getLogger(BatchMonitoringAutoConfiguration.class);
 
     /**
-     * Crée le listener de monitoring de performance.
+     * Creates the performance monitoring listener.
      *
-     * <p>Spring Batch 5.x enregistre automatiquement les beans {@link org.springframework.batch.core.JobExecutionListener}
-     * sur tous les Jobs du contexte.</p>
+     * <p>Spring Batch 5.x automatically registers {@link org.springframework.batch.core.JobExecutionListener}
+     * beans on all Jobs in the context.</p>
      *
-     * @param meterRegistry le registry Micrometer pour l'enregistrement des métriques
-     * @return le listener configuré
+     * @param meterRegistry the Micrometer registry for metrics registration
+     * @return the configured listener
      */
     @Bean
     @ConditionalOnMissingBean
     public PerformanceMonitoringListener performanceMonitoringListener(MeterRegistry meterRegistry) {
-        log.info("Spring Batch Observability activé");
+        log.info("Spring Batch Observability enabled");
         return new PerformanceMonitoringListener(meterRegistry);
     }
 
     /**
-     * Crée le BeanPostProcessor qui enregistre automatiquement le listener
-     * sur tous les Steps créés par Spring.
+     * Creates the BeanPostProcessor that automatically registers the listener
+     * on all Steps created by Spring.
      *
-     * @param listener le listener à enregistrer sur les Steps
-     * @return le post-processor configuré
+     * @param listener the listener to register on Steps
+     * @return the configured post-processor
      */
     @Bean
     public AutomaticStepMonitoringPostProcessor automaticStepMonitoringPostProcessor(PerformanceMonitoringListener listener) {
-        log.info("Auto-enregistrement des listeners sur Jobs et Steps");
+        log.info("Auto-registration of listeners on Jobs and Steps");
         return new AutomaticStepMonitoringPostProcessor(listener);
     }
 
