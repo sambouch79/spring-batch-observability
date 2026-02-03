@@ -2,11 +2,11 @@
 
 > Production-ready observability solution for Spring Batch with Prometheus and Grafana
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2%2B-green.svg)](https://spring.io/projects/spring-boot)
 [![Spring Batch](https://img.shields.io/badge/Spring%20Batch-5.x-blue.svg)](https://spring.io/projects/spring-batch)
-
+[![Maven Central](https://img.shields.io/maven-central/v/com.sambouch.batch/spring-batch-observability.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.sambouch.batch/spring-batch-observability)
 ## ✨ Features
 
 - ✅ **Zero code configuration** - no listener to register manually
@@ -15,9 +15,9 @@
 - ✅ **Performance monitoring** - Job, step, and chunk execution duration with percentiles
 - ✅ **Throughput measurement** - Automatic calculation in items/second
 - ✅ **Prometheus integration** - Works seamlessly with Micrometer and Pushgateway
-- ✅ **Ready-to-use Grafana dashboard** with professional visualizations
+- ✅ **Ready-to-use Grafana dashboard** - with professional visualizations
 - ✅ **JVM metrics included** (memory, CPU, GC)
-- ✅ **Designed for production workloads** Built using Spring Batch & Micrometer best practices
+- ✅ **Designed for production workloads** - Built using Spring Batch & Micrometer best practices
 
 ## 📊 Metrics Collected
 
@@ -184,6 +184,13 @@ A production-ready Grafana dashboard is included in the `dashboards/` directory.
 - 📉 Duration percentiles (p50, p95, p99)
 - 💾 JVM metrics monitoring (memory, CPU)
 - 📋 Detailed table view per step
+### Preview
+
+![Dashboard Overview](/dashboard/screenshots/grafanaDashboard1.png)
+*Complete monitoring dashboard with job duration, throughput, and items processed*
+
+![System Metrics](/dashboard/screenshots/grafanaDashboard2.png)
+*JVM memory and CPU monitoring*
 
 ### Import the Dashboard
 
