@@ -31,8 +31,8 @@
 
     <scm>
         <connection>scm:git:git://github.com/sambouch79/spring-batch-observability.git</connection>
-        <developerConnection>scm:git:ssh://github.com:sambouch79/spring-batch-observability.git</developerConnection>
-        <url>https://github.com/sambouch79/spring-batch-observability/tree/main</url>
+        <developerConnection>scm:git:ssh://git@github.com/sambouch79/spring-batch-observability.git</developerConnection>
+        <url>https://github.com/sambouch79/spring-batch-observability</url>
     </scm>
 
     <properties>
@@ -54,6 +54,14 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
 
     <dependencies>
         <!-- Spring Boot (provided - fourni par l'utilisateur) -->
@@ -179,6 +187,26 @@
                 <configuration>
                     <source>17</source>
                     <doclint>none</doclint>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                    </gpgArguments>
                 </configuration>
             </plugin>
         </plugins>
