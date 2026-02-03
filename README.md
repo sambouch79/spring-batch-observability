@@ -189,7 +189,7 @@ A production-ready Grafana dashboard is included in the `dashboards/` directory.
 ![Dashboard Overview](dashboard/screenshots/grafanaDashboard1.PNG)
 *Complete monitoring dashboard with job duration, throughput, and items processed*
 
-![System Metrics](dashboard/screenshots/grafanaDashboard1.PNG)
+![System Metrics](dashboard/screenshots/grafanaDashboard2.PNG)
 *JVM memory and CPU monitoring*
 
 ### Import the Dashboard
