@@ -9,7 +9,7 @@
 
 ## ✨ Features
 
-- ✅ **Zero code configuration ** - – no listener to register manually
+- ✅ **Zero code configuration** - – no listener to register manually
 - ✅ **Automatic metrics collection** for all Spring Batch jobs and steps
 - ✅ **Comprehensive batch metrics** - Items read/written/skipped, errors, retries, throughput
 - ✅ **Performance monitoring** - Job, step, and chunk execution duration with percentiles
