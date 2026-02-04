@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2%2B-green.svg)](https://spring.io/projects/spring-boot)
 [![Spring Batch](https://img.shields.io/badge/Spring%20Batch-5.x-blue.svg)](https://spring.io/projects/spring-batch)
-[![Maven Central](https://img.shields.io/maven-central/v/com.sambouch.batch/spring-batch-observability.svg?label=Maven%20Central)]([https://search.maven.org/artifact/com.sambouch.batch/spring-batch-observability](https://repo1.maven.org/maven2/io/github/sambouch79/spring-batch-observability/1.0.0/))
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.sambouch79/spring-batch-observability.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.sambouch79/spring-batch-observability)
 ## ✨ Features
 
 - ✅ **Zero code configuration** - no listener to register manually
