@@ -377,6 +377,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📦 Version notice
+- `1.0.0` → **Deprecated** (published by mistake, contains issues)
+- `1.0.1` → **Stable** (use this)
 
 ## 🙏 Acknowledgments
 
