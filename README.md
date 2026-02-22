@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2%2B-green.svg)](https://spring.io/projects/spring-boot)
 [![Spring Batch](https://img.shields.io/badge/Spring%20Batch-5.x-blue.svg)](https://spring.io/projects/spring-batch)
-[![Maven Central](https://img.shields.io/maven-central/v/com.sambouch.batch/spring-batch-observability.svg?label=Maven%20Central)](https://search.maven.org/artifact/com.sambouch.batch/spring-batch-observability)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.sambouch79/spring-batch-observability.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.sambouch79/spring-batch-observability)
 ## ✨ Features
 
 - ✅ **Zero code configuration** - no listener to register manually
@@ -73,7 +73,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.sambouch79</groupId>
     <artifactId>spring-batch-observability</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 
 <!-- Required dependencies (if not already present) -->
@@ -186,10 +186,10 @@ A production-ready Grafana dashboard is included in the `dashboards/` directory.
 - 📋 Detailed table view per step
 ### Preview
 
-![Dashboard Overview](/dashboard/screenshots/grafanaDashboard1.png)
+![Dashboard Overview](dashboard/screenshots/grafanaDashboard1.PNG)
 *Complete monitoring dashboard with job duration, throughput, and items processed*
 
-![System Metrics](/dashboard/screenshots/grafanaDashboard2.png)
+![System Metrics](dashboard/screenshots/grafanaDashboard2.PNG)
 *JVM memory and CPU monitoring*
 
 ### Import the Dashboard
@@ -377,6 +377,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📦 Version notice
+- `1.0.0` → **Deprecated** (published by mistake, contains issues)
+- `1.0.1` → **Stable** (use this)
 
 ## 🙏 Acknowledgments
 
