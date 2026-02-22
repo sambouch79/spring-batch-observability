@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.batch.core.Job;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,7 +24,6 @@ import org.springframework.context.annotation.Configuration;
  * {@code monitoring.enabled=false}</p>
  */
 @Configuration
-@AutoConfiguration
 @ConditionalOnClass(Job.class)
 @ConditionalOnProperty(
         prefix = "monitoring",
@@ -50,7 +48,7 @@ public class BatchMonitoringAutoConfiguration {
     @ConditionalOnMissingBean
     public PerformanceMonitoringListener performanceMonitoringListener(MeterRegistry meterRegistry) {
         log.info("Spring Batch Observability enabled");
-        return new PerformanceMonitoringListener(meterRegistry);
+        return new PerformanceMonitoringListener( meterRegistry);
     }
 
     /**

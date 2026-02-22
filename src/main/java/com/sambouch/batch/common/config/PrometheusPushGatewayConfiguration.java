@@ -48,6 +48,12 @@ public class PrometheusPushGatewayConfiguration {
                 log.debug("Job completed: {} with status: {}",
                         jobExecution.getJobInstance().getJobName(),
                         jobExecution.getStatus());
+                log.debug("Job completed: {} with status: {}",
+                        jobExecution.getJobInstance().getJobName(),
+                        jobExecution.getStatus());
+
+                // Appeler pushMetrics après la fin du job
+                pushMetrics(meterRegistry, jobExecution, properties);
             }
         };
     }

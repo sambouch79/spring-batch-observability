@@ -1,0 +1,2 @@
+com.sambouch.batch.common.config.BatchMonitoringAutoConfiguration
+com.sambouch.batch.common.config.PrometheusPushGatewayConfiguration

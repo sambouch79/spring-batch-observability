@@ -71,7 +71,7 @@ Add the dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.sambouch.batch</groupId>
+    <groupId>io.github.sambouch79</groupId>
     <artifactId>spring-batch-observability</artifactId>
     <version>1.0.0</version>
 </dependency>

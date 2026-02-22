@@ -11,10 +11,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.*;
+import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.scope.context.StepContext;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @DisplayName("PerformanceMonitoringListener Tests")
 class PerformanceMonitoringListenerTest {
@@ -463,6 +472,100 @@ class PerformanceMonitoringListenerTest {
         assertThat(failuresCounter).isNull(); // Pas créé car pas d'erreurs
     }
 
+    @Test
+    @DisplayName("Should record chunk duration")
+    void shouldRecordChunkDuration() {
+        ChunkContext chunkContext = buildChunkContext("testJob", "testStep");
+
+        listener.beforeChunk(chunkContext);
+        listener.afterChunk(chunkContext);
+
+        Timer timer = registry.find("batch.chunk.duration")
+                .tag("job.name", "testJob")
+                .tag("step.name", "testStep")
+                .timer();
+
+        assertThat(timer).isNotNull();
+        assertThat(timer.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Parallel partitioned steps should not interfere with each other")
+    void parallelSteps_shouldBeThreadSafe() throws InterruptedException {
+        int threadCount = 5;
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(threadCount);
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            final int index = i;
+            executor.submit(() -> {
+                try {
+                    startLatch.await();
+                    StepExecution stepExecution = createStepExecution(
+                            createJobExecution("parallelJob", BatchStatus.COMPLETED),
+                            "step:partition" + index
+                    );
+                    stepExecution.setWriteCount(10 * (index + 1));
+
+                    listener.beforeStep(stepExecution);
+                    Thread.sleep(10);
+                    listener.afterStep(stepExecution);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    endLatch.countDown();
+                }
+            });
+        }
+
+        startLatch.countDown();
+        assertThat(endLatch.await(10, TimeUnit.SECONDS)).isTrue();
+        executor.shutdown();
+
+        // Chaque partition doit avoir exactement 1 timer enregistré
+        for (int i = 0; i < threadCount; i++) {
+            Timer timer = registry.find("batch.step.duration")
+                    .tag("step.name", "step:partition" + i)
+                    .timer();
+            assertThat(timer).isNotNull();
+            assertThat(timer.count()).isEqualTo(1);
+        }
+    }
+
+    // ========================================
+    // CHUNK TESTS
+    // ========================================
+    @Test
+    @DisplayName("Should record chunk errors and duration with ERROR tag")
+    void shouldRecordChunkError() {
+        ChunkContext chunkContext = buildChunkContext("testJob", "testStep");
+
+        listener.beforeChunk(chunkContext);
+        listener.afterChunkError(chunkContext);
+
+        Counter errorCounter = registry.find("batch.chunk.errors")
+                .tag("job.name", "testJob")
+                .tag("step.name", "testStep")
+                .counter();
+
+        Timer errorTimer = registry.find("batch.chunk.duration")
+                .tag("status", "ERROR")
+                .timer();
+
+        assertThat(errorCounter).isNotNull();
+        assertThat(errorCounter.count()).isEqualTo(1.0);
+        assertThat(errorTimer).isNotNull();
+    }
+
+    @Test
+    @DisplayName("afterChunkError without beforeChunk should not throw")
+    void afterChunkError_withoutBeforeChunk_shouldNotThrow() {
+        ChunkContext chunkContext = buildChunkContext("testJob", "testStep");
+        assertDoesNotThrow(() -> listener.afterChunkError(chunkContext));
+    }
+
+
     // ========================================
     // HELPER METHODS
     // ========================================
@@ -493,5 +596,15 @@ class PerformanceMonitoringListenerTest {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Test interrupted", e);
         }
+    }
+
+    private ChunkContext buildChunkContext(String jobName, String stepName) {
+        StepExecution stepExecution = createStepExecution(
+                createJobExecution(jobName, BatchStatus.COMPLETED), stepName
+        );
+        StepContext stepContext = new StepContext(stepExecution);
+        ChunkContext chunkContext = mock(ChunkContext.class);
+        when(chunkContext.getStepContext()).thenReturn(stepContext);
+        return chunkContext;
     }
 }

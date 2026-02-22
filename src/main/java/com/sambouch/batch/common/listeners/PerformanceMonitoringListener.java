@@ -7,9 +7,6 @@ import org.springframework.batch.core.*;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Automatic monitoring listener for Spring Batch.
  * Collects metrics for:
@@ -23,22 +20,16 @@ public class PerformanceMonitoringListener
     private static final Logger log = LoggerFactory.getLogger(PerformanceMonitoringListener.class);
 
 
+
     private final MeterRegistry meterRegistry;
 
+
     // Timers
-    private Timer.Sample jobSample;
-    private Timer.Sample stepSample;
-    private Timer.Sample chunkSample;
-    private final Map<String, Counter> itemsReadCounters = new ConcurrentHashMap<>();
-    private final Map<String, Counter> itemsWrittenCounters = new ConcurrentHashMap<>();
-    private final Map<String, Counter> itemsSkippedCounters = new ConcurrentHashMap<>();
-    private final Map<String, Counter> retriesCounters = new ConcurrentHashMap<>();
-    private final Map<String, Counter> filteredCounters = new ConcurrentHashMap<>();
-    private final Map<String, Counter> failuresCounters = new ConcurrentHashMap<>();
-    private final Map<String, DistributionSummary> throughputSummaries = new ConcurrentHashMap<>();
-    private final Map<String, Counter> jobExecutionsCounters = new ConcurrentHashMap<>();
-    private final Map<String, Counter> jobItemsWrittenCounters = new ConcurrentHashMap<>();
-    private final Map<String, Timer> jobDurationTimers = new ConcurrentHashMap<>();
+    // ThreadLocal pour la thread-safety
+    private final ThreadLocal<Timer.Sample> jobSampleHolder = new ThreadLocal<>();
+    private final ThreadLocal<Timer.Sample> stepSampleHolder = new ThreadLocal<>();
+    private final ThreadLocal<Timer.Sample> chunkSampleHolder = new ThreadLocal<>();
+
 
     public PerformanceMonitoringListener(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
@@ -48,7 +39,7 @@ public class PerformanceMonitoringListener
     // ===========================================================
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        this.stepSample = Timer.start(meterRegistry);
+        stepSampleHolder.set(Timer.start(meterRegistry));
         log.debug("Step started : {}", stepExecution.getStepName());
     }
 
@@ -58,7 +49,8 @@ public class PerformanceMonitoringListener
         String jobName = stepExecution.getJobExecution().getJobInstance().getJobName();
         String stepName = stepExecution.getStepName();
         String status = stepExecution.getExitStatus().getExitCode();
-        String key = buildKey(jobName, stepName);
+        Timer.Sample sample = stepSampleHolder.get();
+        stepSampleHolder.remove(); // avoid  ThreadLocal leaks
 
         // Debug logs
         if (log.isDebugEnabled()) {
@@ -72,78 +64,71 @@ public class PerformanceMonitoringListener
         }
 
         // Duration
-        long durationNanos = this.stepSample.stop(Timer.builder("batch.step.duration")
+        if (sample != null) {
+            long durationNanos = sample.stop(Timer.builder("batch.step.duration")
+                    .tag("job.name", jobName)
+                    .tag("step.name", stepName)
+                    .tag("status", status)
+                    .publishPercentileHistogram(true)
+                    .register(meterRegistry));
+
+            long durationMs = durationNanos / 1_000_000;
+            if (durationMs > 0) {
+                recordThroughput(stepExecution, durationMs);
+            }
+        }
+        // Items read
+        Counter.builder("batch.step.items.read")
                 .tag("job.name", jobName)
                 .tag("step.name", stepName)
-                .tag("status", status)
-                .publishPercentileHistogram(true)
-                .register(meterRegistry));
-
-        long durationMs = durationNanos / 1_000_000;
-
-        // Throughput
-        if (durationMs > 0) {
-            recordThroughput(stepExecution, durationMs, key);
-        }
-
-        // Items read
-        itemsReadCounters.computeIfAbsent(key, k ->
-                Counter.builder("batch.step.items.read")
-                        .tag("job.name", jobName)
-                        .tag("step.name", stepName)
-                        .description("Total number of items read")
-                        .register(meterRegistry)
-        ).increment(stepExecution.getReadCount());
+                .description("Total number of items read")
+                .register(meterRegistry)
+                .increment(stepExecution.getReadCount());
 
         // Items written
-        itemsWrittenCounters.computeIfAbsent(key, k ->
-                Counter.builder("batch.step.items.written")
-                        .tag("job.name", jobName)
-                        .tag("step.name", stepName)
-                        .description("Total number of items written")
-                        .register(meterRegistry)
-        ).increment(stepExecution.getWriteCount());
+        Counter.builder("batch.step.items.written")
+                .tag("job.name", jobName)
+                .tag("step.name", stepName)
+                .description("Total number of items written")
+                .register(meterRegistry)
+                .increment(stepExecution.getWriteCount());
 
         // Items skipped
         int totalSkipped = (int) (stepExecution.getReadSkipCount()
                         + stepExecution.getProcessSkipCount()
                         + stepExecution.getWriteSkipCount());
 
-        itemsSkippedCounters.computeIfAbsent(key, k ->
-                Counter.builder("batch.step.items.skipped")
-                        .tag("job.name", jobName)
-                        .tag("step.name", stepName)
-                        .description("Total number of items skipped")
-                        .register(meterRegistry)
-        ).increment(totalSkipped);
+        Counter.builder("batch.step.items.skipped")
+                .tag("job.name", jobName)
+                .tag("step.name", stepName)
+                .description("Total number of items skipped")
+                .register(meterRegistry)
+                .increment(totalSkipped);
 
-        // Retries
-        retriesCounters.computeIfAbsent(key, k ->
-                Counter.builder("batch.step.retries")
-                        .tag("job.name", jobName)
-                        .tag("step.name", stepName)
-                        .description("Number of rollbacks (retry attempts)")
-                        .register(meterRegistry)
-        ).increment(stepExecution.getRollbackCount());
+        // Retrie
+        Counter.builder("batch.step.retries")
+                .tag("job.name", jobName)
+                .tag("step.name", stepName)
+                .description("Number of rollbacks (retry attempts)")
+                .register(meterRegistry)
+                .increment(stepExecution.getRollbackCount());
 
         // Filtered
-        filteredCounters.computeIfAbsent(key, k ->
-                Counter.builder("batch.step.items.filtered")
-                        .tag("job.name", jobName)
-                        .tag("step.name", stepName)
-                        .description("Items filtered by processor")
-                        .register(meterRegistry)
-        ).increment(stepExecution.getFilterCount());
+        Counter.builder("batch.step.items.filtered")
+                .tag("job.name", jobName)
+                .tag("step.name", stepName)
+                .description("Items filtered by processor")
+                .register(meterRegistry)
+                .increment(stepExecution.getFilterCount());
 
         // Failures
         if (!stepExecution.getFailureExceptions().isEmpty()) {
-            failuresCounters.computeIfAbsent(key, k ->
-                    Counter.builder("batch.step.failures")
-                            .tag("job.name", jobName)
-                            .tag("step.name", stepName)
-                            .description("Critical failures (step failed)")
-                            .register(meterRegistry)
-            ).increment(stepExecution.getFailureExceptions().size());
+            Counter.builder("batch.step.failures")
+                    .tag("job.name", jobName)
+                    .tag("step.name", stepName)
+                    .description("Critical failures (step failed)")
+                    .register(meterRegistry)
+                    .increment(stepExecution.getFailureExceptions().size());
         }
 
         return stepExecution.getExitStatus();
@@ -154,36 +139,36 @@ public class PerformanceMonitoringListener
     // ===========================================================
     @Override
     public void beforeJob(JobExecution jobExecution) {
-        this.jobSample = Timer.start(meterRegistry);
+        jobSampleHolder.set(Timer.start(meterRegistry));
         log.debug(" Job started : {}", jobExecution.getJobInstance().getJobName());
     }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-            String jobName = jobExecution.getJobInstance().getJobName();
-            String status = jobExecution.getStatus().toString();
-            String key = jobName + ":" + status;
+        Timer.Sample sample = jobSampleHolder.get();
+        jobSampleHolder.remove();
+        String jobName = jobExecution.getJobInstance().getJobName();
+        String status = jobExecution.getStatus().toString();
 
-            // Job duration
-            Timer jobTimer = jobDurationTimers.computeIfAbsent(key, k ->
-                    Timer.builder("batch.job.duration")
-                            .tag("job.name", jobName)
-                            .tag("status", status)
-                            .description("Duration of batch job execution")
-                            .publishPercentileHistogram(true)
-                            .register(meterRegistry)
-            );
+        // Job duration
+        if (sample != null) {
+            sample.stop(Timer.builder("batch.job.duration")
+                    .tag("job.name", jobName)
+                    .tag("status", status)
+                    .description("Duration of batch job execution")
+                    .publishPercentileHistogram(true)
+                    .register(meterRegistry));
+        }
 
-            this.jobSample.stop(jobTimer);
 
             // Total number of batch job executions
-            jobExecutionsCounters.computeIfAbsent(key, k ->
-                    Counter.builder("batch.job.executions")
-                            .tag("job.name", jobName)
-                            .tag("status", status)
-                            .description("Total number of batch job executions")
-                            .register(meterRegistry)
-            ).increment();
+            Counter.builder("batch.job.executions")
+                    .tag("job.name", jobName)
+                    .tag("status", status)
+                    .description("Total number of batch job executions")
+                    .register(meterRegistry)
+                    .increment();
+
 
             // Items written
             long totalWritten = jobExecution.getStepExecutions()
@@ -191,14 +176,16 @@ public class PerformanceMonitoringListener
                     .mapToLong(StepExecution::getWriteCount)
                     .sum();
 
-            jobItemsWrittenCounters.computeIfAbsent(jobName, k ->
-                    Counter.builder("batch.job.items.written")
-                            .tag("job.name", jobName)
-                            .description("Total items written by job")
-                            .register(meterRegistry)
-            ).increment(totalWritten);
+            Counter.builder("batch.job.items.written")
+                    .tag("job.name", jobName)
+                    .description("Total items written by job")
+                    .register(meterRegistry)
+                    .increment(totalWritten);
 
             log.debug("📊 Job completed : {} - Status : {}", jobName, status);
+        // APPEL CRITIQUE ICI :
+
+        log.info("Job terminé. Synchronisation des métriques finales...");
 
     }
 
@@ -209,64 +196,80 @@ public class PerformanceMonitoringListener
 
     @Override
     public void beforeChunk(ChunkContext context) {
-        this.chunkSample = Timer.start(meterRegistry);
+        chunkSampleHolder.set(Timer.start(meterRegistry));
     }
 
     @Override
     public void afterChunk(ChunkContext context) {
-        if (this.chunkSample != null) {
+        Timer.Sample sample = chunkSampleHolder.get();
+        chunkSampleHolder.remove();
+
+        if (sample != null) {
             StepExecution stepExecution = context.getStepContext().getStepExecution();
             String jobName = stepExecution.getJobExecution().getJobInstance().getJobName();
             String stepName = stepExecution.getStepName();
 
-                //Chunk duration
-                this.chunkSample.stop(Timer.builder("batch.chunk.duration")
-                        .tag("job.name", jobName)
-                        .tag("step.name", stepName)
-                        .description("Duration of chunk processing")
-                        .register(meterRegistry));
-
-                this.chunkSample = null; // Reset pour le prochain chunk
+            sample.stop(Timer.builder("batch.chunk.duration")
+                    .tag("job.name", jobName)
+                    .tag("step.name", stepName)
+                    .description("Duration of chunk processing")
+                    .register(meterRegistry));
         }
-
 
     }
 
     @Override
     public void afterChunkError(ChunkContext context) {
+        Timer.Sample sample = chunkSampleHolder.get();
+        chunkSampleHolder.remove();
+
         StepExecution stepExecution = context.getStepContext().getStepExecution();
+        String jobName = stepExecution.getJobExecution().getJobInstance().getJobName();
         String stepName = stepExecution.getStepName();
+
+        if (sample != null) {
+            sample.stop(Timer.builder("batch.chunk.duration")
+                    .tag("job.name", jobName)
+                    .tag("step.name", stepName)
+                    .tag("status", "ERROR")
+                    .register(meterRegistry));
+        }
+
+        // Métrique d'erreur exploitable dans Grafana
+        Counter.builder("batch.chunk.errors")
+                .tag("job.name", jobName)
+                .tag("step.name", stepName)
+                .description("Number of chunk errors")
+                .register(meterRegistry)
+                .increment();
 
         log.error("Error in chunk for step : {}", stepName);
     }
 
-    private void recordThroughput(StepExecution stepExecution, long durationMs, String key) {
+    // ═══════════════════════════════════════════════════════════
+    // PRIVATE HELPERS
+    // ═══════════════════════════════════════════════════════════
+
+    private void recordThroughput(StepExecution stepExecution, long durationMs) {
         String jobName = stepExecution.getJobExecution().getJobInstance().getJobName();
         String stepName = stepExecution.getStepName();
 
-        // Validation
         double durationSeconds = durationMs / 1000.0;
         if (durationSeconds < 0.001) {
-            log.warn("⚠️ Duration too short ({} ms), throughput not calculated", durationMs);
+            log.warn("Duration too short ({} ms), throughput not calculated", durationMs);
             return;
         }
 
-        // Calcul
         double throughput = stepExecution.getWriteCount() / durationSeconds;
 
-        // throughput
-        throughputSummaries.computeIfAbsent(key, k ->
-                DistributionSummary.builder("batch.step.throughput")
-                        .description("Items processed per second")
-                        .tags("job.name", jobName, "step.name", stepName)
-                        .register(meterRegistry)
-        ).record(throughput);
+        DistributionSummary.builder("batch.step.throughput")
+                .description("Items processed per second")
+                .tags("job.name", jobName, "step.name", stepName)
+                .register(meterRegistry)
+                .record(throughput);
 
         log.debug("Throughput: {} items/sec (duration: {}ms, items: {})",
                 String.format("%.2f", throughput), durationMs, stepExecution.getWriteCount());
     }
 
-    private String buildKey(String jobName, String stepName) {
-        return jobName + ":" + stepName;
-    }
 }
